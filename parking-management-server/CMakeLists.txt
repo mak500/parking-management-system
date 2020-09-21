@@ -14,8 +14,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 file(GLOB CC_SOURCES "*.cc")
 file(GLOB HEADERS "*.h")
 
-add_subdirectory(services)
 add_subdirectory(component)
+add_subdirectory(services)
 
 add_executable(${THIS} ${CC_SOURCES} ${HEADERS})
 target_link_libraries(${THIS} services)

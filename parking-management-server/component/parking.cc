@@ -1,20 +1,24 @@
 #include "../include/parking.hh"
 
+#include <ctime>
+#include <regex>
+
+#include "../include/utils.hh"
 namespace component {
 
-void ParkingLevel::addParkingSlot(const ParkingSlot &ps) {
+void ParkingLevel::addParkingSlot(ParkingSlot ps) {
   if (ps.isOccupied()) {
     auto &vt_occupied_parking = m_occupied_parking.at(ps.getVehicleType());
     if (vt_occupied_parking.find(ps.getParkingSlotId()) ==
         vt_occupied_parking.end()) {
-      vt_occupied_parking[ps.getParkingSlotId()] = ps;
+      vt_occupied_parking[ps.getParkingSlotId()] = std::move(ps);
       m_occupied_parking_count++;
     }
   } else {
     auto &vt_available_parking = m_available_parking.at(ps.getVehicleType());
     if (vt_available_parking.find(ps.getParkingSlotId()) ==
         vt_available_parking.end()) {
-      vt_available_parking[ps.getParkingSlotId()] = ps;
+      vt_available_parking[ps.getParkingSlotId()] = std::move(ps);
       m_available_parking_count++;
     }
   }
@@ -102,7 +106,7 @@ ParkingLot::getOccupiedParkingForVehicleType(const VehicleType &vt) const
     -> utils::StatusOr<ParkingSlot> {
   utils::StatusOr<ParkingSlot> slot;
   for (auto &level : m_parking_level) {
-    if (level.getVehicleTypeAvailableParking(vt)) {
+    if (level.getVehicleTypeAvailableParking(vt) > 0) {
       slot.setData(level.getParkingSlot(vt).getData());
     }
   }
@@ -111,5 +115,94 @@ ParkingLot::getOccupiedParkingForVehicleType(const VehicleType &vt) const
 
 void ParkingLot::returnParking(const ParkingSlot &vt) {
   m_parking_level.at(vt.getParkingLevel()).returnParkingSlot(vt);
+}
+
+void ParkingLot::addParking(std::string unique_id) {
+  ParkingSlot slot = makeParkingSlot(std::move(unique_id));
+  auto &parking_level = m_parking_level.at(slot.getParkingLevel());
+  parking_level.addParkingSlot(std::move(slot));
+}
+
+[[nodiscard]] auto ParkingIdParser::parse(std::string unique_id)
+    -> ParkingSlot {
+  m_state_fptr.at(static_cast<unsigned>(States::PARKING_ID))(unique_id);
+  std::regex re("_");
+  std::sregex_token_iterator it(unique_id.begin(), unique_id.end(), re, -1);
+  for (auto index = static_cast<unsigned>(States::PARKING_LEVEL);
+       index < static_cast<unsigned>(States::TOTAL_STATE); index++, it++) {
+    m_state_fptr.at(index)(*it);
+  }
+  return m_parking_slot;
+}
+
+[[nodiscard]] auto makeParkingSlot(std::string unique_id) -> ParkingSlot {
+  return ParkingIdParser::parse(std::move(unique_id));
+}
+
+/// Dumper routine for component::ParkingSlot
+auto operator<<(std::ostream &os, const component::ParkingSlot &obj)
+    -> std::ostream & {
+  PRINT_CONTAINER_START();
+  PRINT_FIELD("Parking Level : ", obj.m_parking_level);
+  PRINT_FIELD("Parking Id : ", obj.m_parking_slot_id);
+  PRINT_FIELD("Vehicle Type : ", obj.m_vt);
+  PRINT_FIELD("Occupied : ", obj.m_occupied);
+  /// TODO @ (madhur) : Need to add remaining members
+  PRINT_CONTAINER_END();
+  return os;
+}
+
+/// Dumper routine for component::ParkingLevel
+auto operator<<(std::ostream &os, const component::ParkingLevel &obj)
+    -> std::ostream & {
+  PRINT_CONTAINER_START();
+  PRINT_FIELD("Parking Level : ", obj.m_parking_level);
+  PRINT_FIELD("Available Parking : ", obj.m_available_parking_count);
+  PRINT_FIELD("Occupied Parking : ", obj.m_occupied_parking_count);
+  PRINT_CONTAINER_START();
+  for (auto i = static_cast<unsigned>(component::VehicleType::MINIVAN);
+       i < static_cast<unsigned>(component::VehicleType::TOTALVEHICLETYPE);
+       i++) {
+    PRINT_CONTAINER_START();
+    for (const auto &node : obj.m_available_parking.at(i)) {
+      PRINT_CONTAINER_START();
+      PRINT_FIELD("key : ", node.first);
+      PRINT_FIELD("value : ", node.second);
+      PRINT_CONTAINER_ENDL();
+    }
+    PRINT_CONTAINER_ENDL();
+  }
+  PRINT_CONTAINER_ENDL();
+  PRINT_CONTAINER_START();
+  for (auto i = static_cast<unsigned>(component::VehicleType::MINIVAN);
+       i < static_cast<unsigned>(component::VehicleType::TOTALVEHICLETYPE);
+       i++) {
+    PRINT_CONTAINER_START();
+    for (const auto &node : obj.m_occupied_parking.at(i)) {
+      PRINT_CONTAINER_START();
+      PRINT_FIELD("key : ", node.first);
+      PRINT_FIELD("value : ", node.second);
+      PRINT_CONTAINER_ENDL();
+    }
+    PRINT_CONTAINER_ENDL();
+  }
+  PRINT_CONTAINER_ENDL();
+  PRINT_CONTAINER_END();
+  return os;
+}
+
+auto operator<<(std::ostream &os, const component::ParkingLot &obj)
+    -> std::ostream & {
+  PRINT_CONTAINER_START();
+  PRINT_FIELD("Parking Name : ", obj.m_parking_name);
+  PRINT_FIELD("Parking Levels : ", obj.m_parking_level_count);
+  PRINT_CONTAINER_START();
+  for (unsigned int i = 0; i < obj.m_parking_level.size(); i++) {
+    PRINT_FIELD("Level[" + std::to_string(i) + "] : ",
+                obj.m_parking_level.at(i));
+  }
+  PRINT_CONTAINER_ENDL();
+  PRINT_CONTAINER_END();
+  return os;
 }
 } // namespace component

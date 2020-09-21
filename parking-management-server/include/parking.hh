@@ -4,6 +4,7 @@
 #include <array>
 #include <cassert>
 #include <chrono>
+#include <functional>
 #include <map>
 #include <string>
 #include <vector>
@@ -14,9 +15,9 @@
 namespace component {
 class ParkingSlot {
 private:
-  int m_parking_level;
-  std::string m_parking_slot_id{0};
-  VehicleType m_vt{VehicleType::TotalVehicleType};
+  int m_parking_level{-1};
+  std::string m_parking_slot_id;
+  VehicleType m_vt{VehicleType::TOTALVEHICLETYPE};
   bool m_occupied{false};
   std::chrono::time_point<std::chrono::system_clock> m_occupied_at;
 
@@ -79,12 +80,15 @@ public:
     m_occupied = true;
     m_occupied_at = occupied_at;
   }
+
+  friend auto operator<<(std::ostream &os, const ParkingSlot &obj)
+      -> std::ostream &;
 };
 
 class ParkingLevel {
 private:
   using Parking = std::array<std::map<std::string, ParkingSlot>,
-                             VehicleType::TotalVehicleType>;
+                             VehicleType::TOTALVEHICLETYPE>;
   int m_parking_level{0};
   int m_available_parking_count{0};
   int m_occupied_parking_count{0};
@@ -118,20 +122,20 @@ public:
   /// Returns the number of available parking spot for a specific vehicle type
   [[nodiscard]] inline auto
   getVehicleTypeAvailableParking(const VehicleType &vt) const -> int {
-    assert(vt < VehicleType::TotalVehicleType);
+    assert(vt < VehicleType::TOTALVEHICLETYPE);
     return m_available_parking.at(vt).size();
   }
 
   /// Returns the number of occupied parking spot for a specific vehicle type
   [[nodiscard]] inline auto
   getVehicleTypeOccupiedParking(const VehicleType &vt) const -> int {
-    assert(vt < VehicleType::TotalVehicleType);
+    assert(vt < VehicleType::TOTALVEHICLETYPE);
     return m_occupied_parking.at(vt).size();
   }
 
   /// Adds a parking slot to the respective occupied/available parking to the
   /// respective vehicle type
-  void addParkingSlot(const ParkingSlot &ps);
+  void addParkingSlot(ParkingSlot ps);
 
   /// For a specific VehicleType, it returns ParkingSlot if available or returns
   /// the status unavailable
@@ -140,19 +144,32 @@ public:
 
   /// Adds back the parking slot to available
   void returnParkingSlot(const ParkingSlot &ps);
+
+  friend auto operator<<(std::ostream &os, const ParkingLevel &obj)
+      -> std::ostream &;
 };
 
 class ParkingLot {
 private:
+  std::string m_parking_name;
   int m_parking_level_count{0};
   std::vector<ParkingLevel> m_parking_level;
 
 public:
   ParkingLot() = default;
-  explicit ParkingLot(int parking_level_count)
-      : m_parking_level_count(parking_level_count) {
-    m_parking_level.reserve(m_parking_level_count);
+  explicit ParkingLot(std::string parking_name, int parking_level_count)
+      : m_parking_name(std::move(parking_name)),
+        m_parking_level_count(parking_level_count) {
+    m_parking_level.resize(m_parking_level_count);
   }
+
+  /// Provides the parking name
+  [[nodiscard]] inline auto getName() const -> std::string {
+    return m_parking_name;
+  }
+
+  /// Sets the Parking name
+  inline void setName(std::string name) { m_parking_name = std::move(name); }
 
   /// Iterates over all the parking levels and computes available parking slot
   [[nodiscard]] auto getTotalAvailableParking() const -> int;
@@ -197,7 +214,70 @@ public:
 
   /// Returns occupied slot to specific parking level
   void returnParking(const ParkingSlot &vt);
+
+  /// Adds a parking slot to the destined parking level given the unique
+  /// identifier for the slot. The unique_id is always of the format
+  /// {Parking_Level}_{Vehicle_type}_{Parking_Zone}_{Number}
+  /// A typical unique_id for the ParkingSlot would be the following 2_CA_A_3
+  /// ParkingLevel - 2
+  /// VehicleType - CA (CAR)
+  /// Parking Zone - A (Format would be the excel column numbering)
+  /// Parking Slot - 3
+  void addParking(std::string unique_id);
+
+  /// Dump routines for component::ParkingLot
+  friend auto operator<<(std::ostream &os, const component::ParkingLot &obj)
+      -> std::ostream &;
 };
+
+class ParkingIdParser {
+private:
+  enum States { PARKING_ID, PARKING_LEVEL, VEHICLE_TYPE, TOTAL_STATE };
+  inline static ParkingSlot m_parking_slot;
+  const inline static std::map<std::string, VehicleType> m_vtstr_vt_map = {
+      {"MV", VehicleType::MINIVAN},
+      {"CA", VehicleType::CAR},
+      {"MC", VehicleType::MOTORCYCLE},
+      {"CY", VehicleType::CYCLE},
+  };
+
+  const inline static std::array<std::function<void(std::string)>,
+                                 States::TOTAL_STATE>
+      m_state_fptr = {
+          [](std::string unique_id) {
+            m_parking_slot.setParkingSlotId(std::move(unique_id));
+          },
+          [](const std::string &level) {
+            m_parking_slot.setParkingLevel(std::stoi(level));
+          },
+          [](const std::string &vehicle_type) {
+            assert(m_vtstr_vt_map.find(vehicle_type) != m_vtstr_vt_map.end());
+            m_parking_slot.setVehicleType(
+                m_vtstr_vt_map.find(vehicle_type)->second);
+          },
+  };
+
+public:
+  ParkingIdParser() = delete;
+
+  /// Provided with a unique_id string, it creates an available ParkingSlot
+  [[nodiscard]] static auto parse(std::string unique_id) -> ParkingSlot;
+};
+
+/// ParkingSlot creator function from unique_id
+[[nodiscard]] auto makeParkingSlot(std::string unique_id) -> ParkingSlot;
+
+/// Dump routines for component::ParkingSlot
+auto operator<<(std::ostream &os, const component::ParkingSlot &obj)
+    -> std::ostream &;
+
+/// Dump routines for component::ParkingLevel
+auto operator<<(std::ostream &os, const component::ParkingLevel &obj)
+    -> std::ostream &;
+
+/// Dump routine for component::ParkingLot
+auto operator<<(std::ostream &os, const component::ParkingLot &obj)
+    -> std::ostream &;
 } // namespace component
 
 #endif // PARKING_HH

@@ -1,5 +1,5 @@
 ---
-Checks:          'clang-diagnostic-*,clang-analyzer-*,*,-clang-analyzer-alpha.*,-fuchsia-trailing-return'
+Checks:          'clang-diagnostic-*,clang-analyzer-*,*,-clang-analyzer-alpha.*,-fuchsia-trailing-return,-fuchsia-overloaded-operator'
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
 AnalyzeTemporaryDtors: false

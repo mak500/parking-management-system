@@ -2,7 +2,7 @@
 #define VEHICLE_HH
 
 namespace component {
-enum VehicleType { Minivan, Car, Motorcycle, Cycle, TotalVehicleType };
+enum VehicleType { MINIVAN, CAR, MOTORCYCLE, CYCLE, TOTALVEHICLETYPE };
 } // namespace component
 
 #endif // VEHICLE_HH

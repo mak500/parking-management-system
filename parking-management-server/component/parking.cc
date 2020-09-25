@@ -54,6 +54,17 @@ void ParkingLevel::returnParkingSlot(const ParkingSlot &ps) {
   m_available_parking_count++;
 }
 
+void ParkingLot::setParkingLevelCount(unsigned parking_level_count) {
+  for (unsigned i = parking_level_count; i < m_parking_level_count; i++) {
+    addParkingLevel();
+  }
+}
+
+void ParkingLot::addParkingLevel() {
+  m_parking_level.push_back(ParkingLevel(m_parking_level_count));
+  m_parking_level_count++;
+}
+
 [[nodiscard]] auto ParkingLot::getTotalAvailableParking() const -> int {
   int total_available_parking = 0;
   for (const auto &level : m_parking_level) {

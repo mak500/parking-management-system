@@ -152,12 +152,12 @@ public:
 class ParkingLot {
 private:
   std::string m_parking_name;
-  int m_parking_level_count{0};
+  unsigned m_parking_level_count{0};
   std::vector<ParkingLevel> m_parking_level;
 
 public:
   ParkingLot() = default;
-  explicit ParkingLot(std::string parking_name, int parking_level_count)
+  explicit ParkingLot(std::string parking_name, unsigned parking_level_count)
       : m_parking_name(std::move(parking_name)),
         m_parking_level_count(parking_level_count) {
     m_parking_level.resize(m_parking_level_count);
@@ -170,6 +170,17 @@ public:
 
   /// Sets the Parking name
   inline void setName(std::string name) { m_parking_name = std::move(name); }
+
+  /// Provides number of parking levels
+  [[nodiscard]] inline auto getParkingLevelCount() const -> unsigned {
+    return m_parking_level_count;
+  }
+
+  /// Sets Parking total number of parking level
+  void setParkingLevelCount(unsigned parking_level_count);
+
+  /// Adds another parking level to the lot
+  void addParkingLevel();
 
   /// Iterates over all the parking levels and computes available parking slot
   [[nodiscard]] auto getTotalAvailableParking() const -> int;

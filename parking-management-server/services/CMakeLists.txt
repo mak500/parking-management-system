@@ -1,5 +1,5 @@
 # Please enter description for the project
-cmake_minimum_required (VERSION 3.6)
+cmake_minimum_required (VERSION 3.11)
 
 enable_language(CXX)
 enable_language(C)

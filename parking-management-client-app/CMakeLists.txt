@@ -4,7 +4,7 @@ cmake_minimum_required (VERSION 3.11)
 enable_language(CXX)
 enable_language(C)
 
-set(THIS parking_management_server)
+set(THIS parking_management_client_app)
 
 project(${THIS} VERSION 1.0)
 
@@ -14,10 +14,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 file(GLOB CC_SOURCES "*.cc")
 file(GLOB HEADERS "*.h")
 
-add_subdirectory(component)
-add_subdirectory(services)
+add_subdirectory(client)
 
-include_directories(${CMAKE_CURRENT_BINARY_DIR}/services)
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/client)
 
 add_executable(${THIS} ${CC_SOURCES} ${HEADERS})
-target_link_libraries(${THIS} services)
+target_link_libraries(${THIS} client)

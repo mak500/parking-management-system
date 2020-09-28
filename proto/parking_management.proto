@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+message ParkingLevelCapacity {
+    int32 minivan_capacity = 1;
+    int32 car_capacity = 2;
+    int32 motocycle_capacity = 3;
+    int32 cycle_capacity = 4;
+}
+
+message ParkingLotDetails {
+    string name = 1;
+    int32 levels = 2;
+    repeated ParkingLevelCapacity level_vehicle_capacity = 3;
+}
+
+message Status {
+    bool status = 1;
+    string description = 2;
+}
+
+service ParkingManager {
+    rpc CreateParkingLot(ParkingLotDetails) returns (Status) {}
+}

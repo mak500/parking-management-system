@@ -28,8 +28,6 @@ FetchContent_MakeAvailable(googletest)
 # settings on Windows
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
-add_subdirectory(parking-management-server)
-
 # Doxygen setup
 find_package(Doxygen
              REQUIRED dot
@@ -40,6 +38,7 @@ set(DOXYGEN_EXTRACT_PRIVATE YES)
 doxygen_add_docs(
     doxygen
     parking-management-server
+    parking-management-client-app
     README.md
     COMMENT "Generate HTML pages"
 )
@@ -53,3 +52,18 @@ FetchContent_Declare(
 )
 set(FETCHCONTENT_QUIET OFF)
 FetchContent_MakeAvailable(gRPC)
+
+# Since FetchContent uses add_subdirectory under the hood, we can use
+# the grpc targets directly from this build.
+set(_PROTOBUF_LIBPROTOBUF libprotobuf)
+set(_REFLECTION grpc++_reflection)
+set(_PROTOBUF_PROTOC $<TARGET_FILE:protoc>)
+set(_GRPC_GRPCPP grpc++)
+if(CMAKE_CROSSCOMPILING)
+  find_program(_GRPC_CPP_PLUGIN_EXECUTABLE grpc_cpp_plugin)
+else()
+  set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:grpc_cpp_plugin>)
+endif()
+
+add_subdirectory(parking-management-server)
+add_subdirectory(parking-management-client-app)

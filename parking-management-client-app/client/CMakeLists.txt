@@ -4,7 +4,7 @@ cmake_minimum_required (VERSION 3.11)
 enable_language(CXX)
 enable_language(C)
 
-set(THIS services)
+set(THIS client)
 
 project(${THIS} VERSION 1.0)
 
@@ -14,13 +14,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 file(GLOB CC_SOURCES "*.cc")
 file(GLOB HEADERS "*.h")
 
-# For proto generated files
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 # Proto file
 get_filename_component(PM_PROTO "../../proto/parking_management.proto" ABSOLUTE)
 get_filename_component(PM_PROTO_PATH "${PM_PROTO}" PATH)
 
+# Generated sources
 set(PM_PROTO_SRCS "${CMAKE_CURRENT_BINARY_DIR}/parking_management.pb.cc")
 set(PM_PROTO_HDRS "${CMAKE_CURRENT_BINARY_DIR}/parking_management.pb.h")
 set(PM_GRPC_SRCS "${CMAKE_CURRENT_BINARY_DIR}/parking_management.grpc.pb.cc")
@@ -35,7 +35,5 @@ add_custom_command(
         "${PM_PROTO}"
       DEPENDS "${PM_PROTO}")
 
-
-add_library(${THIS} ${CC_SOURCES} ${PM_PROTO_SRCS} ${PM_GRPC_SRCS})
-target_link_libraries(${THIS} components)
+add_library(${THIS} ${CC_SOURCES} ${HEADERS} ${PM_PROTO_SRCS} ${PM_GRPC_SRCS})
 target_link_libraries(${THIS} ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF})

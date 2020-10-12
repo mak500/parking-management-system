@@ -14,7 +14,7 @@ TEST(ParkingSlot, ParkingSlotAPI) {
       << "Parking Slot Vehicle Type is not set correctly" << std::endl;
   ASSERT_EQ(slot.getParkingTime().isOk(), false)
       << "Parking Slot time must not be fetched when not occupied" << std::endl;
-  auto time = std::chrono::system_clock::now();
+  auto time = std::time(nullptr);
 
   slot.setParkingTime(time);
 
@@ -29,100 +29,6 @@ TEST(ParkingSlot, ParkingSlotAPI) {
       << "Parking Slot time should be unavailable" << std::endl;
 }
 
-TEST(ParkingLevel, ParkingLevelAPI) {
-  component::ParkingLevel pl(1);
-  component::ParkingSlot slot(1, "1A 1", component::VehicleType::CAR);
-
-  pl.addParkingSlot(slot);
-  ASSERT_EQ(pl.getVehicleTypeAvailableParking(component::VehicleType::CAR), 1)
-      << "Incorrect Parking slot addition" << std::endl;
-  ASSERT_EQ(pl.getVehicleTypeAvailableParking(component::VehicleType::CYCLE), 0)
-      << "Incorrect Parking slot addition" << std::endl;
-  ASSERT_EQ(pl.getVehicleTypeAvailableParking(component::VehicleType::MINIVAN),
-            0)
-      << "Incorrect Parking slot addition" << std::endl;
-  ASSERT_EQ(
-      pl.getVehicleTypeAvailableParking(component::VehicleType::MOTORCYCLE), 0)
-      << "Incorrect Parking slot addition" << std::endl;
-
-  ASSERT_EQ(pl.getVehicleTypeOccupiedParking(component::VehicleType::CAR), 0)
-      << "Incorrect Parking slot addition" << std::endl;
-  ASSERT_EQ(pl.getVehicleTypeOccupiedParking(component::VehicleType::CYCLE), 0)
-      << "Incorrect Parking slot addition" << std::endl;
-  ASSERT_EQ(pl.getVehicleTypeOccupiedParking(component::VehicleType::MINIVAN),
-            0)
-      << "Incorrect Parking slot addition" << std::endl;
-  ASSERT_EQ(
-      pl.getVehicleTypeOccupiedParking(component::VehicleType::MOTORCYCLE), 0)
-      << "Incorrect Parking slot addition" << std::endl;
-
-  ASSERT_EQ(pl.getAvailableParking(), 1)
-      << "Parking slot must be available" << std::endl;
-  ASSERT_EQ(pl.getOccupiedParking(), 0)
-      << "No parking slot should be occupied" << std::endl;
-  ASSERT_EQ(pl.getParkingSlot(component::VehicleType::CYCLE).isOk(), false)
-      << "No Cycle Slot is available, Should not provide parking." << std::endl;
-
-  auto assigned_slot = pl.getParkingSlot(component::VehicleType::CAR);
-  ASSERT_EQ(assigned_slot.isOk(), true)
-      << "Car parking slot should be available" << std::endl;
-  ASSERT_EQ(assigned_slot.getData().getParkingSlotId(), slot.getParkingSlotId())
-      << "Incorrect Slot assigned" << std::endl;
-  ASSERT_EQ(pl.getAvailableParking(), 0)
-      << "Parking slot must not be available" << std::endl;
-  ASSERT_EQ(pl.getOccupiedParking(), 1)
-      << "Parking slot must be occupied" << std::endl;
-
-  ASSERT_EQ(pl.getVehicleTypeAvailableParking(component::VehicleType::CAR), 0)
-      << "Incorrect Parking slot fetch" << std::endl;
-  ASSERT_EQ(pl.getVehicleTypeAvailableParking(component::VehicleType::CYCLE), 0)
-      << "Incorrect Parking slot fetch" << std::endl;
-  ASSERT_EQ(pl.getVehicleTypeAvailableParking(component::VehicleType::MINIVAN),
-            0)
-      << "Incorrect Parking slot fetch" << std::endl;
-  ASSERT_EQ(
-      pl.getVehicleTypeAvailableParking(component::VehicleType::MOTORCYCLE), 0)
-      << "Incorrect Parking slot fetch" << std::endl;
-
-  ASSERT_EQ(pl.getVehicleTypeOccupiedParking(component::VehicleType::CAR), 1)
-      << "Incorrect Parking slot fetch" << std::endl;
-  ASSERT_EQ(pl.getVehicleTypeOccupiedParking(component::VehicleType::CYCLE), 0)
-      << "Incorrect Parking slot fetch" << std::endl;
-  ASSERT_EQ(pl.getVehicleTypeOccupiedParking(component::VehicleType::MINIVAN),
-            0)
-      << "Incorrect Parking slot fetch" << std::endl;
-  ASSERT_EQ(
-      pl.getVehicleTypeOccupiedParking(component::VehicleType::MOTORCYCLE), 0)
-      << "Incorrect Parking slot fetch" << std::endl;
-
-  pl.returnParkingSlot(assigned_slot.getData());
-  ASSERT_EQ(pl.getAvailableParking(), 1)
-      << "Parking slot must be available" << std::endl;
-  ASSERT_EQ(pl.getOccupiedParking(), 0)
-      << "No parking slot should be occupied" << std::endl;
-  ASSERT_EQ(pl.getVehicleTypeAvailableParking(component::VehicleType::CAR), 1)
-      << "Incorrect Parking slot return" << std::endl;
-  ASSERT_EQ(pl.getVehicleTypeAvailableParking(component::VehicleType::CYCLE), 0)
-      << "Incorrect Parking slot return" << std::endl;
-  ASSERT_EQ(pl.getVehicleTypeAvailableParking(component::VehicleType::MINIVAN),
-            0)
-      << "Incorrect Parking slot return" << std::endl;
-  ASSERT_EQ(
-      pl.getVehicleTypeAvailableParking(component::VehicleType::MOTORCYCLE), 0)
-      << "Incorrect Parking slot return" << std::endl;
-
-  ASSERT_EQ(pl.getVehicleTypeOccupiedParking(component::VehicleType::CAR), 0)
-      << "Incorrect Parking slot return" << std::endl;
-  ASSERT_EQ(pl.getVehicleTypeOccupiedParking(component::VehicleType::CYCLE), 0)
-      << "Incorrect Parking slot return" << std::endl;
-  ASSERT_EQ(pl.getVehicleTypeOccupiedParking(component::VehicleType::MINIVAN),
-            0)
-      << "Incorrect Parking slot return" << std::endl;
-  ASSERT_EQ(
-      pl.getVehicleTypeOccupiedParking(component::VehicleType::MOTORCYCLE), 0)
-      << "Incorrect Parking slot return" << std::endl;
-}
-
 TEST(ParkingIdParser, ParkingIdParseAPI) {
   component::ParkingSlot slot = component::makeParkingSlot("2_CA_A_3");
   ASSERT_EQ(slot.getParkingSlotId(), "2_CA_A_3")
@@ -134,24 +40,72 @@ TEST(ParkingIdParser, ParkingIdParseAPI) {
   ASSERT_EQ(slot.isOccupied(), false) << "Must be available" << std::endl;
 }
 
-TEST(Dumping, ParkingLotDump) {
-  component::ParkingLot lot("Park", 3);
-  lot.addParking("0_MV_A_1");
-  lot.addParking("0_CA_A_2");
-  lot.addParking("0_MC_A_3");
-  lot.addParking("0_CY_A_4");
+TEST(ParkingLot, ParkingLotAPI) {
+  component::ParkingLot parkinglot("Tejas", 2);
+  parkinglot.deleteParkingSlots();
+  parkinglot.addParking("1_CA_0_0");
+  parkinglot.addParking("1_CA_0_1");
+  parkinglot.addParking("1_CA_0_2");
+  parkinglot.addParking("1_CA_0_3");
 
-  lot.addParking("1_MV_A_1");
-  lot.addParking("1_CA_A_2");
-  lot.addParking("1_MC_A_3");
-  lot.addParking("1_CY_A_4");
+  ASSERT_EQ(parkinglot.getTotalAvailableParking(), 4)
+      << "Incorrect available count" << std::endl;
+  ASSERT_EQ(parkinglot.getAvailableParkingAtLevel(0), 0)
+      << "Incorrect available count for level 0" << std::endl;
+  ASSERT_EQ(parkinglot.getAvailableParkingAtLevel(1), 4)
+      << "Incorrect available count for level 1" << std::endl;
+  ASSERT_EQ(
+      parkinglot.getAvailableParkingForVehicleType(component::VehicleType::CAR),
+      4)
+      << "Incorrect available count for vehicle" << std::endl;
+  ASSERT_EQ(parkinglot.getAvailableParkingForVehicleTypeAtLevel(
+                0, component::VehicleType::CAR),
+            0)
+      << "Incorrect available count for level 0 and car" << std::endl;
+  ASSERT_EQ(parkinglot.getAvailableParkingForVehicleTypeAtLevel(
+                1, component::VehicleType::CAR),
+            4)
+      << "Incorrect available count for level 1 and car" << std::endl;
 
-  lot.addParking("2_MV_A_1");
-  lot.addParking("2_CA_A_2");
-  lot.addParking("2_MC_A_3");
-  lot.addParking("2_CY_A_4");
-  std::fstream file("Debug.log", std::ios::out);
-  utils::Dumper d(file);
-  std::cout << lot << std::endl;
-  file.close();
+  ASSERT_EQ(parkinglot.getTotalOccupiedParking(), 0)
+      << "Incorrect occupied count" << std::endl;
+  ASSERT_EQ(parkinglot.getOccupiedParkingAtLevel(0), 0)
+      << "Incorrect occupied count for level 0" << std::endl;
+  ASSERT_EQ(parkinglot.getOccupiedParkingAtLevel(1), 0)
+      << "Incorrect occupied count for level 1" << std::endl;
+  ASSERT_EQ(
+      parkinglot.getOccupiedParkingForVehicleType(component::VehicleType::CAR),
+      0)
+      << "Incorrect occupied count for vehicle" << std::endl;
+  ASSERT_EQ(parkinglot.getOccupiedParkingForVehicleTypeAtLevel(
+                0, component::VehicleType::CAR),
+            0)
+      << "Incorrect occupied count for level 0 and car" << std::endl;
+  ASSERT_EQ(parkinglot.getOccupiedParkingForVehicleTypeAtLevel(
+                1, component::VehicleType::CAR),
+            0)
+      << "Incorrect occupied count for level 1 and car" << std::endl;
+
+  auto slot = parkinglot.getParking(component::VehicleType::CAR);
+  ASSERT_EQ(slot.isOk(), true) << "Unable to fetch a slot" << std::endl;
+
+  auto result = parkinglot.getParkingSlot(slot.getData().getParkingSlotId());
+  ASSERT_EQ(result.isOk(), true) << "Unable to fetch a slot" << std::endl;
+  ASSERT_EQ(result.getData().isOccupied(), true)
+      << "DB update issue" << std::endl;
+  ASSERT_EQ(parkinglot.getTotalAvailableParking(), 3)
+      << "Incorrect available count" << std::endl;
+  ASSERT_EQ(parkinglot.getTotalOccupiedParking(), 1)
+      << "Incorrect occupied count" << std::endl;
+
+  parkinglot.returnParking(slot.getData());
+
+  result = parkinglot.getParkingSlot(slot.getData().getParkingSlotId());
+  ASSERT_EQ(result.isOk(), true) << "Unable to fetch a slot" << std::endl;
+  ASSERT_EQ(result.getData().isOccupied(), false)
+      << "DB update issue" << std::endl;
+  ASSERT_EQ(parkinglot.getTotalAvailableParking(), 4)
+      << "Incorrect available count" << std::endl;
+  ASSERT_EQ(parkinglot.getTotalOccupiedParking(), 0)
+      << "Incorrect occupied count" << std::endl;
 }

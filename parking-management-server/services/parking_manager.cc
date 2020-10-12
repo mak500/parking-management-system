@@ -13,7 +13,7 @@ void ParkingManagerImpl::addParkingSlotsForVehicle(unsigned level,
                                                    const std::string &zone,
                                                    unsigned capacity) {
   for (unsigned i = 0; i < capacity; i++) {
-      addParkingSlot(level, vt, zone, i);
+    addParkingSlot(level, vt, zone, i);
   }
 }
 

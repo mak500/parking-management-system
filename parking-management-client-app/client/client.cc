@@ -29,15 +29,15 @@ void ParkingManagerClient::createParkingLot() {
 
     std::cout << "Provide the number of car parking slot" << std::endl;
     std::cin >> ca_capacity;
-    level->set_minivan_capacity(ca_capacity);
+    level->set_car_capacity(ca_capacity);
 
     std::cout << "Provide the number of motor cycle parking slot" << std::endl;
     std::cin >> mc_capacity;
-    level->set_minivan_capacity(mc_capacity);
+    level->set_motocycle_capacity(mc_capacity);
 
     std::cout << "Provide the number of cycle parking slot" << std::endl;
     std::cin >> cy_capacity;
-    level->set_minivan_capacity(cy_capacity);
+    level->set_cycle_capacity(cy_capacity);
   }
 
   /// Do the service call and create the parking slots

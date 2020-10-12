@@ -1,6 +1,8 @@
 #ifndef PARKING_HH
 #define PARKING_HH
 
+#include <sqlite3.h>
+
 #include <array>
 #include <cassert>
 #include <chrono>
@@ -19,7 +21,7 @@ private:
   std::string m_parking_slot_id;
   VehicleType m_vt{VehicleType::TOTALVEHICLETYPE};
   bool m_occupied{false};
-  std::chrono::time_point<std::chrono::system_clock> m_occupied_at;
+  std::time_t m_occupied_at;
 
 public:
   ParkingSlot() = default;
@@ -62,20 +64,16 @@ public:
   /// Returns the time at which parking spot was occupied. If the parking spot
   /// is not occupied, it retuns UNAVAILABLE status
   [[nodiscard]] inline auto getParkingTime() const
-      -> utils::StatusOr<std::chrono::time_point<std::chrono::system_clock>> {
+      -> utils::StatusOr<std::time_t> {
     if (m_occupied) {
-      return utils::StatusOr<
-          std::chrono::time_point<std::chrono::system_clock>>(m_occupied_at);
+      return utils::StatusOr<std::time_t>(m_occupied_at);
     } else {
-      return utils::StatusOr<
-          std::chrono::time_point<std::chrono::system_clock>>(
-          utils::Status::UNAVAILABLE);
+      return utils::StatusOr<std::time_t>(utils::Status::UNAVAILABLE);
     }
   }
 
   /// Sets the parking time
-  inline void setParkingTime(
-      const std::chrono::time_point<std::chrono::system_clock> &occupied_at) {
+  inline void setParkingTime(const std::time_t &occupied_at) {
     assert(m_occupied == false);
     m_occupied = true;
     m_occupied_at = occupied_at;
@@ -85,83 +83,19 @@ public:
       -> std::ostream &;
 };
 
-class ParkingLevel {
-private:
-  using Parking = std::array<std::map<std::string, ParkingSlot>,
-                             VehicleType::TOTALVEHICLETYPE>;
-  int m_parking_level{0};
-  int m_available_parking_count{0};
-  int m_occupied_parking_count{0};
-  Parking m_available_parking;
-  Parking m_occupied_parking;
-
-public:
-  ParkingLevel() = default;
-  explicit ParkingLevel(int parking_level) : m_parking_level(parking_level) {}
-
-  /// Returns the parking level of the parking
-  [[nodiscard]] inline auto getParkingLevel() const -> int {
-    return m_parking_level;
-  }
-
-  /// Sets the parking level of the parking
-  inline void setParkingLevel(int parking_level) {
-    m_parking_level = parking_level;
-  }
-
-  /// Returns the number of total available parking
-  [[nodiscard]] inline auto getAvailableParking() const -> int {
-    return m_available_parking_count;
-  }
-
-  /// Returns the number of total occupied parking
-  [[nodiscard]] inline auto getOccupiedParking() const -> int {
-    return m_occupied_parking_count;
-  }
-
-  /// Returns the number of available parking spot for a specific vehicle type
-  [[nodiscard]] inline auto
-  getVehicleTypeAvailableParking(const VehicleType &vt) const -> int {
-    assert(vt < VehicleType::TOTALVEHICLETYPE);
-    return m_available_parking.at(vt).size();
-  }
-
-  /// Returns the number of occupied parking spot for a specific vehicle type
-  [[nodiscard]] inline auto
-  getVehicleTypeOccupiedParking(const VehicleType &vt) const -> int {
-    assert(vt < VehicleType::TOTALVEHICLETYPE);
-    return m_occupied_parking.at(vt).size();
-  }
-
-  /// Adds a parking slot to the respective occupied/available parking to the
-  /// respective vehicle type
-  void addParkingSlot(ParkingSlot ps);
-
-  /// For a specific VehicleType, it returns ParkingSlot if available or returns
-  /// the status unavailable
-  [[nodiscard]] auto getParkingSlot(const VehicleType &vt)
-      -> utils::StatusOr<ParkingSlot>;
-
-  /// Adds back the parking slot to available
-  void returnParkingSlot(const ParkingSlot &ps);
-
-  friend auto operator<<(std::ostream &os, const ParkingLevel &obj)
-      -> std::ostream &;
-};
-
 class ParkingLot {
 private:
+  sqlite3 *m_db{nullptr};
+  std::string m_db_name;
   std::string m_parking_name;
   unsigned m_parking_level_count{0};
-  std::vector<ParkingLevel> m_parking_level;
 
 public:
   ParkingLot() = default;
-  explicit ParkingLot(std::string parking_name, unsigned parking_level_count)
-      : m_parking_name(std::move(parking_name)),
-        m_parking_level_count(parking_level_count) {
-    m_parking_level.resize(m_parking_level_count);
-  }
+  explicit ParkingLot(std::string name, unsigned parking_levels);
+
+  /// Opens up a DB if already not opened.
+  void openDB();
 
   /// Provides the parking name
   [[nodiscard]] inline auto getName() const -> std::string {
@@ -169,7 +103,7 @@ public:
   }
 
   /// Sets the Parking name
-  inline void setName(std::string name) { m_parking_name = std::move(name); }
+  void setName(std::string name);
 
   /// Provides number of parking levels
   [[nodiscard]] inline auto getParkingLevelCount() const -> unsigned {
@@ -177,46 +111,40 @@ public:
   }
 
   /// Sets Parking total number of parking level
-  void setParkingLevelCount(unsigned parking_level_count);
+  void setParkingLevelCount(unsigned parking_level_count) {
+    m_parking_level_count = parking_level_count;
+  }
 
   /// Adds another parking level to the lot
-  void addParkingLevel();
+  inline void addParkingLevel() { m_parking_level_count++; }
 
   /// Iterates over all the parking levels and computes available parking slot
-  [[nodiscard]] auto getTotalAvailableParking() const -> int;
+  [[nodiscard]] auto getTotalAvailableParking() const -> unsigned;
 
   /// Iterates over all the parking levels and computes occupied parking slot
-  [[nodiscard]] auto getTotalOccupiedParking() const -> int;
+  [[nodiscard]] auto getTotalOccupiedParking() const -> unsigned;
 
   /// Fetches available parking for a certain parking level
-  [[nodiscard]] inline auto getAvailableParkingAtLevel(int pl) const -> int {
-    assert(pl < m_parking_level_count && pl >= 0);
-    return m_parking_level.at(pl).getAvailableParking();
-  }
+  [[nodiscard]] auto getAvailableParkingAtLevel(unsigned pl) const -> unsigned;
 
   /// Fetches occupied parking for a certain parking level
-  [[nodiscard]] auto getOccupiedParkingAtLevel(int pl) const -> int {
-    assert(pl < m_parking_level_count && pl >= 0);
-    return m_parking_level.at(pl).getOccupiedParking();
-  }
+  [[nodiscard]] auto getOccupiedParkingAtLevel(unsigned pl) const -> unsigned;
 
   /// Gets available parking across all levels for a specific VehicleType
   [[nodiscard]] auto
-  getAvailableParkingForVehicleType(const VehicleType &vt) const -> int;
+  getAvailableParkingForVehicleType(const VehicleType &vt) const -> unsigned;
 
   /// Gets occupied parking across all levels for a specific VehicleType
   [[nodiscard]] auto
-  getOccupiedParkingForVehicleType(const VehicleType &vt) const -> int;
+  getOccupiedParkingForVehicleType(const VehicleType &vt) const -> unsigned;
 
   /// Gets available parking at certain level for a specific VehicleType
-  [[nodiscard]] auto
-  getAvailableParkingForVehicleTypeAtLevel(int level,
-                                           const VehicleType &vt) const -> int;
+  [[nodiscard]] auto getAvailableParkingForVehicleTypeAtLevel(
+      unsigned level, const VehicleType &vt) const -> unsigned;
 
   /// Gets occupied parking at certain level for a specific VehicleType
-  [[nodiscard]] auto
-  getOccupiedParkingForVehicleTypeAtLevel(int level,
-                                          const VehicleType &vt) const -> int;
+  [[nodiscard]] auto getOccupiedParkingForVehicleTypeAtLevel(
+      unsigned level, const VehicleType &vt) const -> unsigned;
 
   /// Tries to get an available parking slot, returns status and slot if able to
   /// allocate
@@ -236,22 +164,22 @@ public:
   /// Parking Slot - 3
   void addParking(std::string unique_id);
 
-  /// Dump routines for component::ParkingLot
-  friend auto operator<<(std::ostream &os, const component::ParkingLot &obj)
-      -> std::ostream &;
+  /// Given an unique_id of the Parking lot, it provides the specific
+  /// ParkingSlot
+  [[nodiscard]] auto getParkingSlot(std::string unique_id)
+      -> utils::StatusOr<ParkingSlot>;
+
+  // Cleans up all the records without deleting the table for a certain level or
+  // all the table.
+  void deleteParkingSlots(int level = -1);
+
+  virtual ~ParkingLot();
 };
 
 class ParkingIdParser {
 private:
   enum States { PARKING_ID, PARKING_LEVEL, VEHICLE_TYPE, TOTAL_STATE };
   inline static ParkingSlot m_parking_slot;
-  const inline static std::map<std::string, VehicleType> m_vtstr_vt_map = {
-      {"MV", VehicleType::MINIVAN},
-      {"CA", VehicleType::CAR},
-      {"MC", VehicleType::MOTORCYCLE},
-      {"CY", VehicleType::CYCLE},
-  };
-
   const inline static std::array<std::function<void(std::string)>,
                                  States::TOTAL_STATE>
       m_state_fptr = {
@@ -280,14 +208,6 @@ public:
 
 /// Dump routines for component::ParkingSlot
 auto operator<<(std::ostream &os, const component::ParkingSlot &obj)
-    -> std::ostream &;
-
-/// Dump routines for component::ParkingLevel
-auto operator<<(std::ostream &os, const component::ParkingLevel &obj)
-    -> std::ostream &;
-
-/// Dump routine for component::ParkingLot
-auto operator<<(std::ostream &os, const component::ParkingLot &obj)
     -> std::ostream &;
 } // namespace component
 

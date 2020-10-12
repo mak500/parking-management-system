@@ -15,5 +15,6 @@ file(GLOB CC_SOURCES "*.cc")
 file(GLOB HEADERS "*.h")
 
 add_library(${THIS} ${CC_SOURCES} ${HEADERS})
+target_link_libraries(${THIS} sqlite3)
 
 add_subdirectory(tests)

@@ -16,4 +16,5 @@ file(GLOB HEADERS "*.h")
 
 add_executable(${THIS} ${CC_SOURCES} ${HEADERS})
 target_link_libraries(${THIS} gtest_main components)
+target_link_libraries(${THIS} components)
 add_test(NAME ${THIS} COMMAND ${THIS})

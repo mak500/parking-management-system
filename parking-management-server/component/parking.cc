@@ -34,7 +34,7 @@ void ParkingLot::openDB() {
   m_db_name = m_parking_name + ".db";
   sql_call_and_check(__FILE__, __LINE__, m_db,
                      std::bind(sqlite3_open, m_db_name.c_str(), &m_db));
-  sqlite3_stmt *sql_stmt;
+  sqlite3_stmt *sql_stmt = nullptr;
 
   // clang format off
   std::string command = "create table if not exists parking ("
@@ -55,7 +55,7 @@ void ParkingLot::openDB() {
 }
 
 [[nodiscard]] auto ParkingLot::getTotalAvailableParking() const -> unsigned {
-  sqlite3_stmt *sql_stmt;
+  sqlite3_stmt *sql_stmt = nullptr;
 
   // clang format off
   std::string command = "select count (parking_id) from parking "
@@ -73,7 +73,7 @@ void ParkingLot::openDB() {
 }
 
 [[nodiscard]] auto ParkingLot::getTotalOccupiedParking() const -> unsigned {
-  sqlite3_stmt *sql_stmt;
+  sqlite3_stmt *sql_stmt = nullptr;
 
   // clang format off
   std::string command = "select count (parking_id) from parking "
@@ -92,7 +92,7 @@ void ParkingLot::openDB() {
 
 [[nodiscard]] auto ParkingLot::getAvailableParkingAtLevel(unsigned pl) const
     -> unsigned {
-  sqlite3_stmt *sql_stmt;
+  sqlite3_stmt *sql_stmt = nullptr;
 
   // clang format off
   std::string command = "select count (parking_id) from parking "
@@ -113,7 +113,7 @@ void ParkingLot::openDB() {
 
 [[nodiscard]] auto ParkingLot::getOccupiedParkingAtLevel(unsigned int pl) const
     -> unsigned {
-  sqlite3_stmt *sql_stmt;
+  sqlite3_stmt *sql_stmt = nullptr;
 
   // clang format off
   std::string command = "select count (parking_id) from parking "
@@ -135,7 +135,7 @@ void ParkingLot::openDB() {
 [[nodiscard]] auto
 ParkingLot::getAvailableParkingForVehicleType(const VehicleType &vt) const
     -> unsigned {
-  sqlite3_stmt *sql_stmt;
+  sqlite3_stmt *sql_stmt = nullptr;
 
   // clang format off
   std::string command = "select count (parking_id) from parking "
@@ -159,7 +159,7 @@ ParkingLot::getAvailableParkingForVehicleType(const VehicleType &vt) const
 [[nodiscard]] auto
 ParkingLot::getOccupiedParkingForVehicleType(const VehicleType &vt) const
     -> unsigned {
-  sqlite3_stmt *sql_stmt;
+  sqlite3_stmt *sql_stmt = nullptr;
 
   // clang format off
   std::string command = "select count (parking_id) from parking "
@@ -182,7 +182,7 @@ ParkingLot::getOccupiedParkingForVehicleType(const VehicleType &vt) const
 
 [[nodiscard]] auto ParkingLot::getAvailableParkingForVehicleTypeAtLevel(
     unsigned level, const VehicleType &vt) const -> unsigned {
-  sqlite3_stmt *sql_stmt;
+  sqlite3_stmt *sql_stmt = nullptr;
 
   // clang format off
   std::string command = "select count (parking_id) from parking "
@@ -208,7 +208,7 @@ ParkingLot::getOccupiedParkingForVehicleType(const VehicleType &vt) const
 
 [[nodiscard]] auto ParkingLot::getOccupiedParkingForVehicleTypeAtLevel(
     unsigned level, const VehicleType &vt) const -> unsigned {
-  sqlite3_stmt *sql_stmt;
+  sqlite3_stmt *sql_stmt = nullptr;
 
   // clang format off
   std::string command = "select count (parking_id) from parking "
@@ -234,7 +234,7 @@ ParkingLot::getOccupiedParkingForVehicleType(const VehicleType &vt) const
 
 [[nodiscard]] auto ParkingLot::getParking(const VehicleType &vt)
     -> utils::StatusOr<ParkingSlot> {
-  sqlite3_stmt *sql_stmt;
+  sqlite3_stmt *sql_stmt = nullptr;
   utils::StatusOr<ParkingSlot> result;
 
   // clang format off
@@ -281,7 +281,7 @@ ParkingLot::getOccupiedParkingForVehicleType(const VehicleType &vt) const
 }
 
 void ParkingLot::returnParking(const ParkingSlot &slot) {
-  sqlite3_stmt *sql_stmt;
+  sqlite3_stmt *sql_stmt = nullptr;
   std::string command = "update parking set occupied_status = false "
                         "where parking_id = ?";
   sql_call_and_check(__FILE__, __LINE__, m_db,
@@ -299,7 +299,7 @@ void ParkingLot::returnParking(const ParkingSlot &slot) {
 void ParkingLot::addParking(std::string unique_id) {
   ParkingSlot slot = makeParkingSlot(unique_id);
 
-  sqlite3_stmt *sql_stmt;
+  sqlite3_stmt *sql_stmt = nullptr;
   std::string command = "insert into parking values(?, ?, ?, ?, ?);";
   sql_call_and_check(__FILE__, __LINE__, m_db,
                      std::bind(sqlite3_prepare_v2, m_db, command.c_str(), -1,
@@ -331,7 +331,7 @@ void ParkingLot::addParking(std::string unique_id) {
 [[nodiscard]] auto ParkingLot::getParkingSlot(std::string unique_id)
     -> utils::StatusOr<ParkingSlot> {
   utils::StatusOr<ParkingSlot> result;
-  sqlite3_stmt *sql_stmt;
+  sqlite3_stmt *sql_stmt = nullptr;
   std::string command =
       "select * from parking where parking_id = \"" + unique_id + "\"";
   sql_call_and_check(__FILE__, __LINE__, m_db,

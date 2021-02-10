@@ -14,8 +14,6 @@ message ParkingLotDetails {
 }
 
 message Status {
-    bool status = 1;
-    string description = 2;
 }
 
 service ParkingManager {

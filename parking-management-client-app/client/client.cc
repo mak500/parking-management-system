@@ -11,7 +11,7 @@ void ParkingManagerClient::createParkingLot() {
 
   std::cout << "Provide the name of the Parking Lot" << std::endl;
   std::string parking_name;
-  std::cin >> parking_name;
+  getline(std::cin ,parking_name);
   details.set_name(parking_name);
 
   std::cout << "Provide the number of parking levels" << std::endl;
